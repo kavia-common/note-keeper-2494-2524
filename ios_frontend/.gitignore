@@ -1,1 +1,22 @@
-.env
+# iOS / Xcode
+.DS_Store
+build/
+DerivedData/
+*.xcuserstate
+*.xcuserdata/
+*.xccheckout
+*.xcscmblueprint
+*.moved-aside
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+xcuserdata/
+
+# Swift Package Manager
+.build/
+Packages/
+Package.resolved
+
+# Logs
+*.log
