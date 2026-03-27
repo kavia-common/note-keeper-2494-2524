@@ -1,0 +1,4 @@
+{
+    "command": "./gradlew assembleDebug",
+    "working_directory": "/home/kavia/workspace/code-generation/note-keeper-2494-2524/ios_frontend"
+}
