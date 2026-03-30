@@ -8,7 +8,12 @@ struct NotesAppApp: App {
         let persistence = PersistenceController.shared
         let repository = CoreDataNoteRepository(persistenceController: persistence)
         let networkMonitor = NetworkMonitor()
-        let remoteAPI = MockRemoteNotesAPI()
+
+        // Dependency injection decision:
+        // - Default to MockRemoteNotesAPI in DEBUG for a "no-backend-required" dev experience.
+        // - Optionally enable URLSessionRemoteNotesAPI by providing a base URL.
+        let remoteAPI: RemoteNotesAPI = Self.makeRemoteNotesAPI()
+
         let syncEngine = SyncEngine(repository: repository, remoteAPI: remoteAPI, networkMonitor: networkMonitor)
 
         self.appEnvironment = AppEnvironment(
@@ -29,6 +34,34 @@ struct NotesAppApp: App {
                 appEnvironment.syncEngine.start()
             }
         }
+    }
+
+    // MARK: - Remote API selection
+
+    // PUBLIC_INTERFACE
+    /// Creates the `RemoteNotesAPI` used by the app.
+    ///
+    /// In this scaffold we keep configuration simple:
+    /// - DEBUG: use `MockRemoteNotesAPI()` by default
+    /// - RELEASE: use `MockRemoteNotesAPI()` unless you set a URL below
+    ///
+    /// To point at a backend, set `remoteBaseURLString` to something like:
+    /// "https://example.com/api"
+    static func makeRemoteNotesAPI() -> RemoteNotesAPI {
+        // NOTE: Request from user/orchestrator if you want this configurable via build settings or Info.plist.
+        let remoteBaseURLString: String? = nil
+
+        if let remoteBaseURLString,
+           let url = URL(string: remoteBaseURLString) {
+            return URLSessionRemoteNotesAPI(baseURL: url)
+        }
+
+        #if DEBUG
+        return MockRemoteNotesAPI()
+        #else
+        // Keep a safe default for now until a backend exists.
+        return MockRemoteNotesAPI()
+        #endif
     }
 }
 
