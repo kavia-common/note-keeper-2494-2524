@@ -2,6 +2,8 @@ import SwiftUI
 
 @main
 struct NotesAppApp: App {
+    @Environment(\.scenePhase) private var scenePhase
+
     private let appEnvironment: AppEnvironment
 
     init() {
@@ -26,12 +28,23 @@ struct NotesAppApp: App {
 
     var body: some Scene {
         WindowGroup {
-            NotesListView(viewModel: NotesListViewModel(repository: appEnvironment.noteRepository,
-                                                        syncEngine: appEnvironment.syncEngine))
+            NotesListView(
+                viewModel: NotesListViewModel(
+                    repository: appEnvironment.noteRepository,
+                    syncEngine: appEnvironment.syncEngine
+                )
+            )
             .environment(\.managedObjectContext, appEnvironment.persistenceController.container.viewContext)
             .onAppear {
-                // Kick off initial sync attempt (no-op if offline or mock).
+                // Start connectivity observation and do an initial sync attempt (no-op if offline or mock).
                 appEnvironment.syncEngine.start()
+            }
+            .onChange(of: scenePhase) { _, newPhase in
+                // Step 01.06:
+                // Trigger a best-effort sync when the app becomes active.
+                // `SyncEngine` already guards against parallel syncs and no-ops when offline.
+                guard newPhase == .active else { return }
+                Task { await appEnvironment.syncEngine.syncOnce() }
             }
         }
     }
