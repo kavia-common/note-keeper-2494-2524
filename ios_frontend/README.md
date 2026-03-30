@@ -12,9 +12,8 @@ The Swift source is under `ios_frontend/NotesApp/`.
 
 ## Running
 This environment may not include Xcode. On macOS:
-1. Create/open an Xcode iOS App project (SwiftUI lifecycle) and set its root to `NotesApp/` sources.
-2. Ensure the `.xcdatamodeld` exists and is included (see `NotesApp/Persistence/NotesApp.xcdatamodeld`).
-3. Build & run on a simulator/device.
+1. Open `ios_frontend/NotesApp.xcodeproj` in Xcode.
+2. Select the `NotesApp` scheme and a simulator/device.
+3. Build & run.
 
-If you already have an Xcode project, just add the `NotesApp/` folder and set the app entry to `NotesAppApp`.
-"""
+The project already includes the SwiftUI sources under `ios_frontend/NotesApp/` and a Core Data model at `NotesApp/Persistence/NotesApp.xcdatamodeld`.
