@@ -34,12 +34,27 @@ final class SyncEngine {
 
     // PUBLIC_INTERFACE
     /// Attempts a single sync pass (push then pull). Safe to call repeatedly.
+    ///
+    /// Sync behavior:
+    /// - Push phase:
+    ///   - Fetch non-clean notes (dirty/syncing/failed).
+    ///   - Mark them syncing.
+    ///   - Push to remote (including tombstones).
+    ///   - On success: mark them clean and set lastSyncedAt to a single, consistent timestamp.
+    ///   - On failure: mark them failed (retryable).
+    /// - Pull phase:
+    ///   - Pull remote notes and reconcile locally via deterministic last-write-wins.
     func syncOnce() async {
         guard networkMonitor.isOnline else { return }
 
+        // Push then pull (simple, predictable for small apps).
         do {
-            // Push dirty notes
             let dirty = try await repository.fetchDirtyNotes()
+            let idsToPush = dirty.map(\.id)
+
+            // Mark syncing before the network call (explicit state transition).
+            try await repository.markNotesSyncing(ids: idsToPush)
+
             let remoteDirty = dirty.map {
                 RemoteNote(
                     id: $0.id,
@@ -50,14 +65,27 @@ final class SyncEngine {
                     isDeleted: $0.isDeleted
                 )
             }
+
             try await remoteAPI.pushNotes(remoteDirty)
 
-            // Pull remote notes and reconcile locally with last-write-wins
+            // After a successful push, mark as clean and set lastSyncedAt consistently.
+            let pushedAt = Date()
+            try await repository.markNotesClean(ids: idsToPush, lastSyncedAt: pushedAt)
+
+            // Pull remote notes and reconcile locally with deterministic last-write-wins (incl tombstones).
             let remoteNotes = try await remoteAPI.pullNotes()
             try await repository.reconcileRemoteNotes(remoteNotes)
         } catch {
-            // For now, swallow errors. A real implementation should mark syncStatus=failed and backoff.
-            // Kept minimal per scaffold requirement.
+            // Mark the current batch as failed to keep it retryable on next sync attempt.
+            // Note: if fetchDirtyNotes() throws, idsToPush is unknown; in that case we do nothing.
+            do {
+                let dirty = try await repository.fetchDirtyNotes()
+                try await repository.markNotesFailed(ids: dirty.map(\.id))
+            } catch {
+                // no-op: we tried our best to set failure state.
+            }
+
+            // Keep scaffold behavior: swallow errors (no UI surfacing yet).
             _ = error
         }
     }
