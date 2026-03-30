@@ -13,20 +13,18 @@ struct NotesListView: View {
             ZStack(alignment: .bottomTrailing) {
                 AppTheme.canvas.ignoresSafeArea()
 
-                VStack(spacing: 12) {
+                VStack(spacing: 10) {
                     SearchField(text: $viewModel.searchText, placeholder: "Search notes...") {
                         viewModel.updateQuery(context: viewContext)
                     }
                     .padding(.horizontal, AppTheme.pagePadding)
-                    .padding(.top, 12)
+                    .padding(.top, AppTheme.topPadding)
 
                     ScrollView {
-                        LazyVStack(spacing: 12) {
+                        LazyVStack(spacing: 10) {
                             ForEach(viewModel.notes) { note in
                                 NoteCard(note: note)
-                                    .onTapGesture {
-                                        selectedNote = note
-                                    }
+                                    .onTapGesture { selectedNote = note }
                                     .contextMenu {
                                         Button(role: .destructive) {
                                             Task { try? await viewModel.deleteNote(id: note.id) }
@@ -38,8 +36,9 @@ struct NotesListView: View {
 
                             if viewModel.notes.isEmpty {
                                 Text("No notes")
+                                    .font(.system(size: 14, weight: .regular))
                                     .foregroundStyle(AppTheme.textMuted)
-                                    .padding(.top, 40)
+                                    .padding(.top, 44)
                             }
                         }
                         .padding(.horizontal, AppTheme.pagePadding)
@@ -88,13 +87,21 @@ struct NotesListView: View {
             }
             .navigationDestination(item: $selectedNote) { note in
                 NoteEditorView(
-                    viewModel: NoteEditorViewModel(note: note, repository: viewModel.repositoryProxy, syncEngine: viewModel.syncEngineProxy)
+                    viewModel: NoteEditorViewModel(
+                        note: note,
+                        repository: viewModel.repositoryProxy,
+                        syncEngine: viewModel.syncEngineProxy
+                    )
                 )
             }
             .navigationDestination(isPresented: $showCreate) {
                 if let createdNote {
                     NoteEditorView(
-                        viewModel: NoteEditorViewModel(note: createdNote, repository: viewModel.repositoryProxy, syncEngine: viewModel.syncEngineProxy)
+                        viewModel: NoteEditorViewModel(
+                            note: createdNote,
+                            repository: viewModel.repositoryProxy,
+                            syncEngine: viewModel.syncEngineProxy
+                        )
                     )
                 }
             }
@@ -114,7 +121,6 @@ private struct SearchField: View {
             .textInputAutocapitalization(.never)
             .autocorrectionDisabled()
             .modifier(AppTheme.outlinedFieldStyle())
-            .foregroundStyle(AppTheme.textPrimary)
             .onSubmit(onCommit)
     }
 }
@@ -138,13 +144,7 @@ private struct NoteCard: View {
                 .font(.system(size: 11, weight: .regular))
                 .foregroundStyle(AppTheme.textMuted)
         }
-        .padding(12)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.white)
-        .overlay(
-            RoundedRectangle(cornerRadius: AppTheme.cornerRadius)
-                .stroke(AppTheme.borderSubtle, lineWidth: AppTheme.borderWidth)
-        )
+        .modifier(AppTheme.cardStyle())
     }
 }
 
@@ -156,10 +156,10 @@ private struct FloatingActionButton: View {
             Image(systemName: "plus")
                 .font(.system(size: 22, weight: .bold))
                 .foregroundStyle(.white)
-                .frame(width: 56, height: 56)
+                .frame(width: AppTheme.fabSize, height: AppTheme.fabSize)
                 .background(AppTheme.fabTeal)
                 .clipShape(Circle())
-                .shadow(color: .black.opacity(0.2), radius: 6, x: 0, y: 3)
+                .shadow(color: .black.opacity(0.22), radius: 8, x: 0, y: 4)
         }
         .accessibilityLabel("New note")
     }

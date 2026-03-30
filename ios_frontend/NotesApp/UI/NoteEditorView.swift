@@ -15,27 +15,31 @@ struct NoteEditorView: View {
                 TextField("Title", text: $viewModel.title)
                     .modifier(AppTheme.outlinedFieldStyle())
                     .padding(.horizontal, AppTheme.pagePadding)
-                    .padding(.top, 12)
+                    .padding(.top, AppTheme.topPadding)
 
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: 8) {
                     Text("Content")
                         .font(.system(size: 13, weight: .regular))
-                        .foregroundStyle(AppTheme.textPrimary)
+                        .foregroundStyle(AppTheme.textSecondary)
 
                     TextEditor(text: $viewModel.content)
-                        .padding(8)
-                        .frame(minHeight: 280)
+                        .font(.system(size: 14, weight: .regular))
+                        .foregroundStyle(AppTheme.textPrimary)
+                        .scrollContentBackground(.hidden)
+                        .padding(10)
+                        .frame(minHeight: 320)
+                        .background(AppTheme.fieldFill)
+                        .clipShape(RoundedRectangle(cornerRadius: AppTheme.cornerRadius))
                         .overlay(
                             RoundedRectangle(cornerRadius: AppTheme.cornerRadius)
                                 .stroke(AppTheme.borderSubtle, lineWidth: AppTheme.borderWidth)
                         )
-                        .foregroundStyle(AppTheme.textPrimary)
                 }
                 .padding(.horizontal, AppTheme.pagePadding)
 
                 Spacer()
 
-                HStack(spacing: 16) {
+                HStack(spacing: 12) {
                     OutlinedActionButton(title: "SAVE") {
                         Task {
                             try? await viewModel.save()
@@ -43,7 +47,7 @@ struct NoteEditorView: View {
                         }
                     }
 
-                    OutlinedActionButton(title: "DELETE") {
+                    OutlinedActionButton(title: "DELETE", titleColor: AppTheme.appBarPurple) {
                         showingDeleteConfirm = true
                     }
                 }
@@ -72,15 +76,18 @@ struct NoteEditorView: View {
 
 private struct OutlinedActionButton: View {
     let title: String
+    var titleColor: Color = AppTheme.appBarPurple
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(AppTheme.appBarPurple)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(titleColor)
                 .frame(maxWidth: .infinity)
-                .frame(height: 38)
+                .frame(height: 40)
+                .background(AppTheme.surface)
+                .clipShape(RoundedRectangle(cornerRadius: AppTheme.cornerRadius))
                 .overlay(
                     RoundedRectangle(cornerRadius: AppTheme.cornerRadius)
                         .stroke(AppTheme.borderSubtle, lineWidth: AppTheme.borderWidth)
