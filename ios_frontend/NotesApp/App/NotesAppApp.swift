@@ -5,6 +5,7 @@ struct NotesAppApp: App {
     @Environment(\.scenePhase) private var scenePhase
 
     private let appEnvironment: AppEnvironment
+    private let backgroundSyncScheduler: BackgroundSyncScheduling
 
     init() {
         let persistence = PersistenceController.shared
@@ -18,6 +19,15 @@ struct NotesAppApp: App {
 
         let syncEngine = SyncEngine(repository: repository, remoteAPI: remoteAPI, networkMonitor: networkMonitor)
 
+        // Step 01.02:
+        // Background sync scheduling is optional. We use a plugin-style abstraction with a no-op fallback
+        // so the app remains functional even when BGTaskScheduler isn't available/configured.
+        let scheduler = BackgroundSyncSchedulerFactory.make {
+            await syncEngine.syncOnce()
+        }
+        scheduler.configure()
+
+        self.backgroundSyncScheduler = scheduler
         self.appEnvironment = AppEnvironment(
             persistenceController: persistence,
             noteRepository: repository,
@@ -44,7 +54,13 @@ struct NotesAppApp: App {
                 // Trigger a best-effort sync when the app becomes active.
                 // `SyncEngine` already guards against parallel syncs and no-ops when offline.
                 guard newPhase == .active else { return }
+
+                // Foreground sync (primary behavior, always available).
                 Task { await appEnvironment.syncEngine.syncOnce() }
+
+                // Step 01.02: Also refresh background schedule (best-effort).
+                // If unsupported or not configured, this is a no-op.
+                backgroundSyncScheduler.schedulePeriodicSync(earliestBegin: 15 * 60)
             }
         }
     }
