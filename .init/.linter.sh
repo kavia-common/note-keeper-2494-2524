@@ -7,6 +7,6 @@ set -euo pipefail
 # - flutter_frontend: Flutter project (Android tooling under android/gradlew)
 #
 # So we run Android lint from the Flutter project.
-cd /home/kavia/workspace/code-generation/note-keeper-2494-2524/flutter_frontend/android
+cd /home/kavia/workspace/code-generation/note-organizer-9603-9612-2494/notes_frontend/android
 ./gradlew lint
 
