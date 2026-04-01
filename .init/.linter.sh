@@ -1,8 +1,13 @@
 #!/bin/bash
-cd /home/kavia/workspace/code-generation/note-keeper-2494-2524/ios_frontend
-./gradlew lint
-LINT_EXIT_CODE=$?
-if [ $LINT_EXIT_CODE -ne 0 ]; then
-   exit 1
-fi
+set -euo pipefail
+
+# Repo-level lint entrypoint used by CI.
+#
+# IMPORTANT:
+# - The preview/CI environment may not have a working Android toolchain for Gradle lint.
+# - This repository's primary preview target is the Flutter web app.
+#
+# Therefore, we lint using `flutter analyze` inside the Flutter container root.
+cd /home/kavia/workspace/code-generation/note-organizer-9603-9612-2494/notes_frontend
+flutter analyze
 
